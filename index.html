@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steal A ShitCoin</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <div id="menu-screen">
+            <h1 class="title">STEAL A SHITCOIN</h1>
+            <p class="subtitle">Crypto Tycoon</p>
+            <button id="play-btn" class="btn">PLAY</button>
+            <button id="reset-btn" class="btn btn-small hidden">RESET SAVE</button>
+            <div id="offline-earnings" class="hidden"></div>
+            <div class="menu-hint">
+                <p>WASD - Move | E - Interact</p>
+                <p>TAB - Shop | Q - Stats | M - Sound</p>
+                <p>Merge same coins = Level Up!</p>
+                <p>Shift+R - Prestige | P - Premium Shop</p>
+                <p>1/2/3 - Switch floors</p>
+            </div>
+            <div id="wallet-status" class="wallet-status">Connect wallet to pay with ETH</div>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div id="hud">
+                <div id="money-display">
+                    <span class="money-icon">$</span>
+                    <span id="money">100</span>
+                </div>
+                <div id="income-display">
+                    <span>+</span>
+                    <span id="income">0</span>
+                    <span>/sec</span>
+                </div>
+            </div>
+            <canvas id="game-canvas"></canvas>
+            <div id="controls-hint">
+                WASD - move | E - interact | TAB - shop | Q - stats | Merge same coins!
+            </div>
+        </div>
+    </div>
+    <script src="web3integration.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
