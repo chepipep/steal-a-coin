@@ -1536,7 +1536,7 @@ class Game {
 
         ctx.fillStyle = '#aaa';
         ctx.font = '7px "Press Start 2P"';
-        ctx.fillText('+50% income, +20% spawn, +30% luck, +100% offline', panelX + panelW/2, panelY + 72);
+        ctx.fillText('+50% income, +20% spawn, +30% luck', panelX + panelW/2, panelY + 72);
 
         if (!this.isVIP) {
             ctx.fillStyle = '#4caf50';
@@ -2523,19 +2523,6 @@ class Game {
 
             this.calcIncome();
 
-            if (data.lastSaveTime && data.totalIncome > 0) {
-                const now = Date.now();
-                const elapsed = Math.min((now - data.lastSaveTime) / 1000, 8 * 60 * 60);
-                if (elapsed > 60) {
-                    const offlineEarnings = Math.floor(data.totalIncome * elapsed * 0.15); // 15% offline (VIP = 50%)
-                    if (offlineEarnings > 0) {
-                        this.money += offlineEarnings;
-                        this.lifetimeEarnings += offlineEarnings;
-                        this.showOfflineEarnings(offlineEarnings, elapsed);
-                    }
-                }
-            }
-
             document.getElementById('reset-btn').classList.remove('hidden');
             document.getElementById('play-btn').textContent = 'CONTINUE';
 
@@ -2543,19 +2530,6 @@ class Game {
         } catch(e) {
             console.log('Load failed:', e);
         }
-    }
-
-    showOfflineEarnings(amount, seconds) {
-        const el = document.getElementById('offline-earnings');
-        const hours = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        let timeStr = '';
-        if (hours > 0) timeStr += hours + 'h ';
-        if (mins > 0) timeStr += mins + 'm';
-        if (!timeStr) timeStr = Math.floor(seconds) + 's';
-
-        el.innerHTML = 'Welcome back! You earned <span>$' + this.formatNum(amount) + '</span><br>while away (' + timeStr + ')';
-        el.classList.remove('hidden');
     }
 
     resetGame() {
