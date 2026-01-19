@@ -4,13 +4,13 @@ A pixel-art crypto idle game built on Base.
 
 ## Play Now
 
-**[Play the Game](https://YOUR_USERNAME.github.io/StealAShitCoin/)**
+**[Play the Game](https://chepipep.github.io/Steal-A-Shitcoin/)**
 
 ## Contract
 
-**Base Mainnet:** `0x_YOUR_CONTRACT_ADDRESS_HERE`
+**Base Mainnet:** `0xCDc9FE548Aec05888f014e15481B029C03680d26`
 
-[View on BaseScan](https://basescan.org/address/0x_YOUR_CONTRACT_ADDRESS_HERE)
+[View on BaseScan](https://basescan.org/address/0xCDc9FE548Aec05888f014e15481B029C03680d26)
 
 ## About
 

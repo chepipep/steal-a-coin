@@ -1,7 +1,7 @@
 // Web3 Integration for Steal A ShitCoin
 // Connects to Base network and handles ETH payments
 
-const CONTRACT_ADDRESS = '0x_YOUR_CONTRACT_ADDRESS_HERE'; // Update after deploy
+const CONTRACT_ADDRESS = '0xCDc9FE548Aec05888f014e15481B029C03680d26';
 const BASE_CHAIN_ID = 8453; // Base Mainnet
 
 const CONTRACT_ABI = [
