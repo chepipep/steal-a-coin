@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700"/>
+      <stop offset="50%" style="stop-color:#FFA500"/>
+      <stop offset="100%" style="stop-color:#FF8C00"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="200" fill="url(#bgGrad)"/>
+
+  <!-- Outer glow ring -->
+  <circle cx="512" cy="512" r="380" fill="none" stroke="#FFD700" stroke-width="8" opacity="0.3" filter="url(#glow)"/>
+
+  <!-- Main coin -->
+  <ellipse cx="512" cy="512" rx="300" ry="300" fill="url(#coinGrad)" filter="url(#glow)"/>
+
+  <!-- Coin inner ring -->
+  <circle cx="512" cy="512" r="250" fill="none" stroke="#B8860B" stroke-width="12"/>
+
+  <!-- Dollar sign -->
+  <text x="512" y="580" font-family="Arial Black, sans-serif" font-size="320" font-weight="bold" fill="#1a1a2e" text-anchor="middle">$</text>
+
+  <!-- Shine effect -->
+  <ellipse cx="420" cy="420" rx="80" ry="40" fill="white" opacity="0.3" transform="rotate(-45 420 420)"/>
+
+  <!-- Small coins in background -->
+  <circle cx="180" cy="200" r="60" fill="#FFD700" opacity="0.6"/>
+  <circle cx="844" cy="824" r="50" fill="#FFD700" opacity="0.5"/>
+  <circle cx="850" cy="200" r="40" fill="#FFD700" opacity="0.4"/>
+  <circle cx="174" cy="824" r="45" fill="#FFD700" opacity="0.5"/>
+</svg>

@@ -4,9 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="base:app_id" content="696aa2796b2e86fd30456136">
+
+    <!-- Open Graph / Mini App Meta Tags -->
+    <meta property="og:title" content="Steal A ShitCoin">
+    <meta property="og:description" content="Crypto idle tycoon game. Merge shitcoins and become the ultimate crypto mogul!">
+    <meta property="og:image" content="https://chepipep.github.io/Steal-A-Shitcoin/icon.svg">
+    <meta property="og:type" content="website">
+
+    <!-- Farcaster Frame Meta Tags -->
+    <meta property="fc:frame" content="vNext">
+    <meta property="fc:frame:image" content="https://chepipep.github.io/Steal-A-Shitcoin/icon.svg">
+    <meta property="fc:frame:button:1" content="Play Game">
+    <meta property="fc:frame:button:1:action" content="launch_frame">
+    <meta property="fc:frame:button:1:target" content="https://chepipep.github.io/Steal-A-Shitcoin">
+
     <title>Steal A ShitCoin</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
+
+    <!-- Farcaster Mini App SDK -->
+    <script type="module">
+        import { sdk } from 'https://esm.sh/@farcaster/miniapp-sdk';
+        window.farcasterSdk = sdk;
+
+        // Initialize SDK and signal ready when page loads
+        window.addEventListener('load', async () => {
+            try {
+                await sdk.actions.ready();
+                console.log('Farcaster Mini App ready');
+            } catch (e) {
+                console.log('Not running in Farcaster client');
+            }
+        });
+    </script>
 </head>
 <body>
     <div id="game-container">
