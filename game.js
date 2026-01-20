@@ -795,9 +795,9 @@ class Game {
 
     spawnSellParticles(x, y) {
         // Limit particles to prevent performance issues
-        if (this.particles.length > 100) return;
-        for (let i = 0; i < 12; i++) {
-            const angle = (Math.PI * 2 / 12) * i;
+        if (this.particles.length > 50) return;
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 / 6) * i;
             this.particles.push({
                 x, y,
                 vx: Math.cos(angle) * 4,
@@ -810,9 +810,9 @@ class Game {
     }
 
     spawnMergeParticles(x, y) {
-        if (this.particles.length > 100) return;
-        for (let i = 0; i < 16; i++) {
-            const angle = (Math.PI * 2 / 16) * i;
+        if (this.particles.length > 40) return;
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i;
             this.particles.push({
                 x, y,
                 vx: Math.cos(angle) * 5,
@@ -823,8 +823,8 @@ class Game {
             });
         }
         // Limit sparkles too
-        if (this.sparkles.length < 30) {
-            for (let i = 0; i < 6; i++) {
+        if (this.sparkles.length < 15) {
+            for (let i = 0; i < 3; i++) {
                 this.sparkles.push({
                     x: x + (Math.random() - 0.5) * 40,
                     y: y + (Math.random() - 0.5) * 40,
@@ -838,15 +838,15 @@ class Game {
 
     // Explosion effect for merge
     spawnMergeExplosion(x, y, item) {
-        if (this.particles.length > 150) return;
+        if (this.particles.length > 60) return;
 
         const isRainbow = item.mutation === 'rainbow';
         const itemColor = isRainbow ? '#ff00ff' : (item.color || '#ffeb3b');
         const glowColor = item.glow || '#fff';
 
         // Ring of particles expanding outward (explosion effect)
-        for (let i = 0; i < 24; i++) {
-            const angle = (Math.PI * 2 / 24) * i;
+        for (let i = 0; i < 10; i++) {
+            const angle = (Math.PI * 2 / 10) * i;
             const speed = 6 + Math.random() * 4;
             this.particles.push({
                 x, y,
@@ -859,7 +859,7 @@ class Game {
         }
 
         // Inner burst particles
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 6; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = 2 + Math.random() * 3;
             this.particles.push({
@@ -873,8 +873,8 @@ class Game {
         }
 
         // Sparkle stars
-        if (this.sparkles.length < 50) {
-            for (let i = 0; i < 12; i++) {
+        if (this.sparkles.length < 20) {
+            for (let i = 0; i < 5; i++) {
                 this.sparkles.push({
                     x: x + (Math.random() - 0.5) * 80,
                     y: y + (Math.random() - 0.5) * 80,
@@ -898,7 +898,7 @@ class Game {
 
     spawnIncomeParticle(x, y, income) {
         // Limit text particles
-        if (this.particles.length > 80) return;
+        if (this.particles.length > 40) return;
         this.particles.push({
             x: x + (Math.random() - 0.5) * 20,
             y: y,
@@ -1746,41 +1746,36 @@ class Game {
             ctx.fillText('↑↓ Scroll (' + (this.collectionScroll + 1) + '-' + Math.min(this.collectionScroll + visibleCount, this.coinTypes.length) + ' of ' + this.coinTypes.length + ')', panelX + panelW/2, panelY + panelH - 60);
         }
 
-        // Rarities section
+        // Rarities section (compact layout)
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 9px "Press Start 2P"';
-        ctx.fillText('RARITIES:', panelX + 70, panelY + panelH - 40);
+        ctx.font = 'bold 8px "Press Start 2P"';
+        ctx.textAlign = 'left';
+        ctx.fillText('RARITIES:', panelX + 15, panelY + panelH - 40);
 
         const rarityList = Object.entries(this.rarities);
-        let rx = panelX + 150;
+        let rx = panelX + 15;
+        const rarityY = panelY + panelH - 28;
         for (let [name, data] of rarityList) {
             ctx.fillStyle = data.color;
-            ctx.font = '6px "Press Start 2P"';
-            ctx.textAlign = 'left';
-            ctx.fillText(name.toUpperCase() + ' x' + data.multiplier, rx, panelY + panelH - 40);
-            rx += 75;
+            ctx.font = '5px "Press Start 2P"';
+            ctx.fillText(name.substring(0, 4).toUpperCase() + 'x' + data.multiplier, rx, rarityY);
+            rx += 80;
         }
 
-        // Mutations section
+        // Mutations section (compact layout)
         ctx.fillStyle = '#ff00ff';
-        ctx.font = 'bold 9px "Press Start 2P"';
+        ctx.font = 'bold 8px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillText('MUTATIONS:', panelX + 55, panelY + panelH - 22);
+        ctx.fillText('MUTATIONS:', panelX + 15, panelY + panelH - 12);
 
-        let mx = panelX + 160;
+        let mx = panelX + 130;
         for (let [name, data] of Object.entries(this.mutations)) {
             const mColor = name === 'rainbow' ? this.getRainbowColor(0) : data.color;
             ctx.fillStyle = mColor;
-            ctx.font = '6px "Press Start 2P"';
-            ctx.fillText(data.name + ' x' + data.incomeMultiplier, mx, panelY + panelH - 22);
-            mx += 90;
+            ctx.font = '5px "Press Start 2P"';
+            ctx.fillText(data.name.substring(0, 4) + 'x' + data.incomeMultiplier, mx, panelY + panelH - 12);
+            mx += 85;
         }
-
-        // Close hint
-        ctx.fillStyle = '#888';
-        ctx.font = '8px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('[C] to close', panelX + panelW/2, panelY + panelH - 6);
     }
 
     drawShopPanel(ctx, W, H) {
@@ -2247,60 +2242,61 @@ class Game {
         const cx = p.x + p.size/2;
         const cy = p.y + p.size/2;
 
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        // Shadow (simple, no blur)
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.beginPath();
-        ctx.ellipse(cx, cy + p.size/2 + 5, 22, 9, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy + p.size/2 + 5, 20, 8, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        const bodyGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
-        bodyGrad.addColorStop(0, '#68d391');
-        bodyGrad.addColorStop(1, '#38a169');
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy + 5, 20, 26, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#276749';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        // Robot body
+        ctx.fillStyle = '#4a5568';
+        ctx.fillRect(cx - 16, cy - 5, 32, 35);
+        ctx.fillStyle = '#2d3748';
+        ctx.fillRect(cx - 14, cy, 28, 25);
 
-        ctx.fillStyle = '#fbd38d';
-        ctx.beginPath();
-        ctx.arc(cx, cy - 14, 16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#dd6b20';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Body glow line
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(cx - 12, cy + 5, 24, 3);
+        ctx.fillStyle = '#00ffff50';
+        ctx.fillRect(cx - 10, cy + 12, 20, 2);
+        ctx.fillRect(cx - 10, cy + 17, 20, 2);
 
+        // Robot head
+        ctx.fillStyle = '#4a5568';
+        ctx.fillRect(cx - 14, cy - 28, 28, 24);
         ctx.fillStyle = '#1a202c';
+        ctx.fillRect(cx - 12, cy - 26, 24, 20);
+
+        // Visor (eyes)
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(cx - 9, cy - 20, 6, 8);
+        ctx.fillRect(cx + 3, cy - 20, 6, 8);
+
+        // Antenna
+        ctx.fillStyle = '#718096';
+        ctx.fillRect(cx - 2, cy - 35, 4, 8);
+        ctx.fillStyle = '#f56565';
         ctx.beginPath();
-        ctx.arc(cx - 5, cy - 14, 4, 0, Math.PI * 2);
-        ctx.arc(cx + 5, cy - 14, 4, 0, Math.PI * 2);
+        ctx.arc(cx, cy - 37, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(cx - 6, cy - 15, 2, 0, Math.PI * 2);
-        ctx.arc(cx + 4, cy - 15, 2, 0, Math.PI * 2);
-        ctx.fill();
+        // Arms
+        ctx.fillStyle = '#4a5568';
+        ctx.fillRect(cx - 22, cy + 2, 6, 20);
+        ctx.fillRect(cx + 16, cy + 2, 6, 20);
 
-        ctx.strokeStyle = '#744210';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy - 10, 6, 0.2, Math.PI - 0.2);
-        ctx.stroke();
-
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px "Press Start 2P"';
+        // Label (no shadow for performance)
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 9px "Press Start 2P"';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 4;
-        ctx.fillText('YOU', cx, p.y - 20);
-        ctx.shadowBlur = 0;
+        ctx.fillText('YOU', cx + 1, p.y - 22);
+        ctx.fillStyle = '#00ffff';
+        ctx.fillText('YOU', cx, p.y - 23);
 
         if (p.heldItem) {
             const bobY = Math.sin(this.animTime / 120) * 4;
-            this.drawItem(ctx, cx, p.y - 55 + bobY, p.heldItem);
+            this.drawItem(ctx, cx, p.y - 60 + bobY, p.heldItem);
         }
     }
 
@@ -2328,13 +2324,13 @@ class Game {
             const alpha = t.life / t.maxLife;
             const scale = 0.8 + alpha * 0.4;
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = t.color;
             ctx.font = `bold ${Math.floor(14 * scale)}px "Press Start 2P"`;
             ctx.textAlign = 'center';
-            ctx.shadowColor = '#000';
-            ctx.shadowBlur = 4;
+            // Shadow text (no blur for performance)
+            ctx.fillStyle = '#000';
+            ctx.fillText(t.text, t.x + 1, t.y + 1);
+            ctx.fillStyle = t.color;
             ctx.fillText(t.text, t.x, t.y);
-            ctx.shadowBlur = 0;
         }
         ctx.globalAlpha = 1;
     }
