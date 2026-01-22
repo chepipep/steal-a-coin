@@ -1,5 +1,9 @@
-// STEAL A SHITCOIN - Ultimate Edition
+// STEAL A COIN - Yandex Games Edition
 // Buy coins, place them, earn income, sell for profit!
+
+// Yandex Games SDK
+let ysdk = null;
+let yandexPlayer = null;
 
 class Game {
     constructor() {
@@ -43,7 +47,6 @@ class Game {
         this.statsOpen = false;
         this.rebirthOpen = false;
         this.collectionOpen = false;
-        this.donateShopOpen = false;
         this.collectionScroll = 0;
         this.shopUpgradeBoxes = [];
         this.slotBuyBox = null;
@@ -54,25 +57,6 @@ class Game {
             diamond:     { color: '#b9f2ff', glow: '#e0ffff', name: 'DIAMOND', chance: 0.3, incomeMultiplier: 5, priceMultiplier: 4 },
             darkMatter:  { color: '#4a0080', glow: '#9932cc', name: 'DARK MATTER', chance: 0.08, incomeMultiplier: 10, priceMultiplier: 8 },
             rainbow:     { color: 'rainbow', glow: '#ffffff', name: 'RAINBOW', chance: 0.02, incomeMultiplier: 25, priceMultiplier: 15 }
-        };
-
-        // ETH Prices (placeholders for Web3)
-        this.ethPrices = {
-            rebirth: 0.001,
-            slot: 0.0005,
-            vip: 0.005,
-            incomeBoost2x: 0.0008,
-            spawnBoost2x: 0.0008,
-            luckyBoost: 0.001,
-            instantUpgrade: 0.0003
-        };
-
-        // VIP and Booster system
-        this.isVIP = false;
-        this.boosters = {
-            income2x: { active: false, endTime: 0 },
-            spawn2x: { active: false, endTime: 0 },
-            lucky2x: { active: false, endTime: 0 }
         };
 
         // Rarities (harder to get rare ones)
@@ -87,7 +71,7 @@ class Game {
 
         // Extended coin types (up to 100B value)
         this.coinTypes = [
-            { icon: '💩', name: 'ShitCoin', baseIncome: 1, basePrice: 10, tier: 1 },
+            { icon: '💩', name: 'Poop', baseIncome: 1, basePrice: 10, tier: 1 },
             { icon: '🐕', name: 'Doge', baseIncome: 2, basePrice: 25, tier: 1 },
             { icon: '🐸', name: 'Pepe', baseIncome: 5, basePrice: 60, tier: 1 },
             { icon: '🦍', name: 'Ape', baseIncome: 12, basePrice: 150, tier: 2 },
@@ -154,27 +138,30 @@ class Game {
         this.staticCacheValid = false;
         this.cachedGradients = {};
 
-        // Web3 Manager (initialized after DOM ready)
-        this.web3 = null;
+        // Optimization: Cached DOM references
+        this.domRefs = {};
+
+        // Optimization: Save batching (dirty flag)
+        this.saveDirty = false;
+        this.lastSaveTime = 0;
+
+        // Optimization: Cached floor pedestals
+        this.cachedFloorPedestals = null;
+        this.cachedFloorNumber = 0;
+
+        // Optimization: Shockwaves array (init here, not lazily)
+        this.shockwaves = [];
+
+        // Optimization: Max effect limits
+        this.maxParticles = 40;
+        this.maxSparkles = 15;
+        this.maxFloatingTexts = 20;
 
         this.init();
     }
 
-    async initWeb3() {
-        if (typeof Web3Manager !== 'undefined') {
-            this.web3 = new Web3Manager(this);
-            const connected = await this.web3.init();
-            if (connected) {
-                const walletStatus = document.getElementById('wallet-status');
-                if (walletStatus) {
-                    walletStatus.textContent = 'Wallet: ' + this.web3.getShortAddress();
-                    walletStatus.style.color = '#4caf50';
-                }
-            }
-        }
-    }
-
-    setupPedestals() {
+    setupPedestals(preserveGolden = false) {
+        const oldPedestals = preserveGolden ? this.pedestals : null;
         this.pedestals = [];
         const startX = 180;
         const startY = 270;
@@ -186,6 +173,8 @@ class Game {
             for (let row = 0; row < 3; row++) {
                 for (let col = 0; col < 4; col++) {
                     const index = floor * 12 + row * 4 + col;
+                    const oldPed = oldPedestals ? oldPedestals[index] : null;
+
                     this.pedestals.push({
                         x: startX + col * spacingX,
                         y: startY + row * spacingY,
@@ -193,7 +182,9 @@ class Game {
                         height: 55,
                         floor: floor + 1,
                         item: null,
-                        unlocked: index < this.unlockedSlots
+                        unlocked: index < this.unlockedSlots,
+                        golden: oldPed ? oldPed.golden : false,  // Golden slots persist through rebirth
+                        frozenItem: null  // Item saved from rebirth, frozen until slot unlocked
                     });
                 }
             }
@@ -201,7 +192,12 @@ class Game {
     }
 
     getCurrentFloorPedestals() {
-        return this.pedestals.filter(p => p.floor === this.currentFloor);
+        // Cache filtered pedestals to avoid recreating array each call
+        if (this.cachedFloorNumber !== this.currentFloor || !this.cachedFloorPedestals) {
+            this.cachedFloorPedestals = this.pedestals.filter(p => p.floor === this.currentFloor);
+            this.cachedFloorNumber = this.currentFloor;
+        }
+        return this.cachedFloorPedestals;
     }
 
     switchFloor(floor) {
@@ -211,6 +207,16 @@ class Game {
     }
 
     init() {
+        // Cache DOM references for performance
+        this.domRefs = {
+            gameScreen: document.getElementById('game-screen'),
+            menuScreen: document.getElementById('menu-screen'),
+            playBtn: document.getElementById('play-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            moneyEl: document.getElementById('money'),
+            incomeEl: document.getElementById('income')
+        };
+
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
 
@@ -223,12 +229,11 @@ class Game {
                 this.interact();
             }
 
-            if ((e.code === 'KeyE' || e.code === 'Escape') && (this.shopOpen || this.statsOpen || this.rebirthOpen || this.collectionOpen || this.donateShopOpen)) {
+            if ((e.code === 'KeyE' || e.code === 'Escape') && (this.shopOpen || this.statsOpen || this.rebirthOpen || this.collectionOpen)) {
                 this.shopOpen = false;
                 this.statsOpen = false;
                 this.rebirthOpen = false;
                 this.collectionOpen = false;
-                this.donateShopOpen = false;
                 this.ePressed = true;
             }
 
@@ -258,16 +263,13 @@ class Game {
             if (e.code === 'KeyM') {
                 this.soundEnabled = !this.soundEnabled;
             }
-            if (e.code === 'KeyP') {
-                this.donateShopOpen = !this.donateShopOpen;
-                this.shopOpen = false;
-                this.statsOpen = false;
-                this.rebirthOpen = false;
-                this.collectionOpen = false;
+            // G - Watch ad for bonus
+            if (e.code === 'KeyG' && !this.shopOpen && !this.statsOpen && !this.rebirthOpen && !this.collectionOpen) {
+                this.showRewardedAd();
             }
 
             // Floor switching (only when no menus open)
-            if (!this.shopOpen && !this.statsOpen && !this.rebirthOpen && !this.collectionOpen && !this.donateShopOpen) {
+            if (!this.shopOpen && !this.statsOpen && !this.rebirthOpen && !this.collectionOpen) {
                 if (e.code === 'Digit1') this.switchFloor(1);
                 if (e.code === 'Digit2') this.switchFloor(2);
                 if (e.code === 'Digit3') this.switchFloor(3);
@@ -326,9 +328,6 @@ class Game {
 
         this.updateHUD();
 
-        // Initialize Web3 connection
-        this.initWeb3();
-
         requestAnimationFrame(t => this.loop(t));
     }
 
@@ -336,16 +335,6 @@ class Game {
         const rect = this.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
-
-        // Donate shop click handling
-        if (this.donateShopOpen && this.donateButtons) {
-            for (let btn of this.donateButtons) {
-                if (mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
-                    this.handleDonateAction(btn.action, btn.key);
-                    return;
-                }
-            }
-        }
 
         // Shop click handling
         if (this.shopOpen) {
@@ -410,21 +399,6 @@ class Game {
         }
 
         // === DECORATIVE ELEMENTS ===
-
-        // Crypto symbols scattered around (decorative)
-        const cryptoSymbols = ['₿', '◆', '⬡', '◈', '⟠'];
-        const decorPositions = [
-            {x: 50, y: 580}, {x: 950, y: 200}, {x: 980, y: 450},
-            {x: 30, y: 250}, {x: 1020, y: 580}, {x: 70, y: 400}
-        ];
-        ctx.globalAlpha = 0.15;
-        ctx.font = 'bold 40px Arial';
-        ctx.textAlign = 'center';
-        decorPositions.forEach((pos, i) => {
-            ctx.fillStyle = ['#ffd700', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f44336'][i % 6];
-            ctx.fillText(cryptoSymbols[i % cryptoSymbols.length], pos.x, pos.y);
-        });
-        ctx.globalAlpha = 1;
 
         // Glowing corner accents
         const accentCorners = [
@@ -578,8 +552,6 @@ class Game {
 
     getRandomRarity() {
         let luckyBonus = this.upgrades.luckyRolls.level * this.upgrades.luckyRolls.effect;
-        if (this.boosters.lucky2x.active) luckyBonus *= 2; // Lucky booster doubles luck
-        if (this.isVIP) luckyBonus *= 1.3; // VIP gets 30% more luck
 
         const roll = Math.random() * 100;
         let cumulative = 0;
@@ -954,15 +926,104 @@ class Game {
         const cost = this.slotPrices[this.unlockedSlots];
         if (this.money >= cost) {
             this.money -= cost;
-            this.unlockedSlots++;
-            this.pedestals[this.unlockedSlots - 1].unlocked = true;
-            this.playSound(600, 1200);
-            this.addFloatingText(450, 300, 'SLOT ' + this.unlockedSlots + ' UNLOCKED!', '#4caf50');
-            this.updateHUD();
-            this.saveGame();
+            this.unlockNextSlot();
         } else {
             this.playSound(150, 100);
         }
+    }
+
+    // Unlock next slot and unfreeze any frozen item
+    unlockNextSlot() {
+        if (this.unlockedSlots >= this.maxSlots) return;
+
+        this.unlockedSlots++;
+        const ped = this.pedestals[this.unlockedSlots - 1];
+        ped.unlocked = true;
+
+        // Unfreeze item if there's one waiting
+        if (ped.frozenItem) {
+            ped.item = ped.frozenItem;
+            ped.frozenItem = null;
+            this.addFloatingText(450, 280, 'FROZEN MOB RESTORED!', '#00bcd4');
+        }
+
+        this.playSound(600, 1200);
+        this.addFloatingText(450, 300, 'SLOT ' + this.unlockedSlots + ' UNLOCKED!', '#4caf50');
+        this.calcIncome();
+        this.updateHUD();
+        this.saveGame();
+    }
+
+    // Unlock slot by watching ad (no cost, no requirements)
+    unlockSlotWithAd() {
+        if (this.unlockedSlots >= this.maxSlots) {
+            this.addFloatingText(450, 300, 'All slots unlocked!', '#ff9800');
+            this.playSound(150, 100);
+            return;
+        }
+
+        if (!ysdk) {
+            this.addFloatingText(550, 350, 'Ads not available', '#ff0000');
+            return;
+        }
+
+        ysdk.adv.showRewardedVideo({
+            callbacks: {
+                onOpen: () => {
+                    this.soundEnabled = false;
+                },
+                onRewarded: () => {
+                    this.unlockNextSlot();
+                    this.addFloatingText(450, 250, 'FREE SLOT!', '#ffd700');
+                },
+                onClose: () => {
+                    this.soundEnabled = true;
+                },
+                onError: (e) => {
+                    console.log('Ad error:', e);
+                    this.addFloatingText(550, 350, 'Ad not available', '#ff0000');
+                }
+            }
+        });
+    }
+
+    // Make a slot golden by watching ad
+    makeSlotGolden(slotIndex) {
+        const ped = this.pedestals[slotIndex];
+        if (!ped || !ped.unlocked) {
+            this.addFloatingText(550, 350, 'Unlock slot first!', '#ff0000');
+            return;
+        }
+        if (ped.golden) {
+            this.addFloatingText(550, 350, 'Already golden!', '#ffd700');
+            return;
+        }
+
+        if (!ysdk) {
+            this.addFloatingText(550, 350, 'Ads not available', '#ff0000');
+            return;
+        }
+
+        ysdk.adv.showRewardedVideo({
+            callbacks: {
+                onOpen: () => {
+                    this.soundEnabled = false;
+                },
+                onRewarded: () => {
+                    ped.golden = true;
+                    this.playSound(800, 800);
+                    this.addFloatingText(ped.x + ped.width/2, ped.y, '★ GOLDEN SLOT! ★', '#ffd700');
+                    this.saveGame();
+                },
+                onClose: () => {
+                    this.soundEnabled = true;
+                },
+                onError: (e) => {
+                    console.log('Ad error:', e);
+                    this.addFloatingText(550, 350, 'Ad not available', '#ff0000');
+                }
+            }
+        });
     }
 
     canRebirth() {
@@ -987,6 +1048,18 @@ class Game {
             return;
         }
 
+        // Save items from golden slots before rebirth
+        const goldenItems = [];
+        for (let i = 0; i < this.pedestals.length; i++) {
+            const ped = this.pedestals[i];
+            if (ped.golden && ped.item) {
+                goldenItems.push({
+                    index: i,
+                    item: { ...ped.item }
+                });
+            }
+        }
+
         this.rebirthLevel++;
         this.rebirthMultiplier = 1 + this.rebirthLevel * 1.0; // +100% per rebirth
         // maxSlots stays at 36, but more floors unlock with progression
@@ -1002,10 +1075,17 @@ class Game {
             this.upgrades[key].level = 0;
         }
 
-        this.setupPedestals();
+        this.setupPedestals(true); // Preserve golden status
         this.conveyor.items = [];
         this.player.heldItem = null;
         this.totalIncome = 0;
+
+        // Restore frozen items to golden slots
+        for (const saved of goldenItems) {
+            if (this.pedestals[saved.index]) {
+                this.pedestals[saved.index].frozenItem = saved.item;
+            }
+        }
 
         this.spawnConveyorItem(700);
         this.spawnConveyorItem(900);
@@ -1015,109 +1095,17 @@ class Game {
         this.rebirthOpen = false;
         this.updateHUD();
         this.saveGame();
-    }
 
-    async handleDonateAction(action, key) {
-        // Use Web3 if connected, otherwise simulate for demo
-        const useWeb3 = this.web3 && this.web3.isConnected;
-
-        switch (action) {
-            case 'booster':
-                if (this.boosters[key].active) {
-                    this.addFloatingText(550, 350, 'Already active!', '#ff0000');
-                    this.playSound(150, 100);
-                    return;
-                }
-                if (useWeb3) {
-                    await this.web3.buyBooster(key);
-                } else {
-                    // Demo mode
-                    this.boosters[key].active = true;
-                    this.boosters[key].endTime = Date.now() + 60 * 60 * 1000;
-                    this.addFloatingText(550, 320, '[DEMO] BOOSTER ACTIVATED', '#4caf50');
-                    this.playSound(600, 300);
-                    this.saveGame();
-                }
-                break;
-
-            case 'instantSlot':
-                if (this.unlockedSlots >= this.maxSlots) {
-                    this.addFloatingText(550, 350, 'All slots unlocked!', '#ff0000');
-                    this.playSound(150, 100);
-                    return;
-                }
-                if (useWeb3) {
-                    await this.web3.buyInstantSlot();
-                } else {
-                    this.unlockedSlots++;
-                    this.pedestals[this.unlockedSlots - 1].unlocked = true;
-                    this.addFloatingText(550, 320, '[DEMO] SLOT UNLOCKED', '#ff9800');
-                    this.playSound(500, 200);
-                    this.updateHUD();
-                    this.saveGame();
-                }
-                break;
-
-            case 'instantRebirth':
-                if (useWeb3) {
-                    await this.web3.buyInstantRebirth();
-                } else {
-                    this.rebirthLevel++;
-                    this.rebirthMultiplier = 1 + this.rebirthLevel * 1.0;
-                    this.money = 100;
-                    this.lifetimeEarnings = 0;
-                    this.totalMerges = 0;
-                    this.totalSold = 0;
-                    this.unlockedSlots = 1;
-                    for (let k in this.upgrades) {
-                        this.upgrades[k].level = 0;
-                    }
-                    this.setupPedestals();
-                    this.conveyor.items = [];
-                    this.player.heldItem = null;
-                    this.totalIncome = 0;
-                    this.spawnConveyorItem(700);
-                    this.spawnConveyorItem(900);
-                    this.addFloatingText(550, 350, '[DEMO] REBIRTH ' + this.rebirthLevel, '#ff00ff');
-                    this.playSound(700, 500);
-                    this.updateHUD();
-                    this.saveGame();
-                }
-                break;
-
-            case 'buyVIP':
-                if (this.isVIP) {
-                    this.addFloatingText(550, 350, 'Already VIP!', '#ffd700');
-                    return;
-                }
-                if (useWeb3) {
-                    await this.web3.buyVIP();
-                } else {
-                    this.isVIP = true;
-                    this.addFloatingText(550, 320, '[DEMO] VIP ACTIVATED', '#ffd700');
-                    this.playSound(800, 800);
-                    this.saveGame();
-                }
-                break;
-        }
+        // Show fullscreen ad after rebirth
+        this.showFullscreenAd();
     }
 
     update(dt) {
         this.animTime += dt;
 
-        // Update boosters
-        const now = Date.now();
-        for (let key in this.boosters) {
-            if (this.boosters[key].active && now > this.boosters[key].endTime) {
-                this.boosters[key].active = false;
-            }
-        }
-
-        // Apply spawn rate upgrade (reduces interval) + booster
+        // Apply spawn rate upgrade (reduces interval)
         const spawnRateBonus = 1 - (this.upgrades.spawnRate.level * this.upgrades.spawnRate.effect);
         let actualSpawnInterval = this.conveyor.spawnInterval * Math.max(0.3, spawnRateBonus);
-        if (this.boosters.spawn2x.active) actualSpawnInterval *= 0.5; // 2x faster spawn
-        if (this.isVIP) actualSpawnInterval *= 0.8; // VIP gets 20% faster
 
         this.conveyor.spawnTimer += dt;
         if (this.conveyor.spawnTimer >= actualSpawnInterval) {
@@ -1152,17 +1140,13 @@ class Game {
         if (this.incomeTimer >= 1000) {
             this.incomeTimer = 0;
             if (this.totalIncome > 0) {
-                let incomeMultiplier = 1;
-                if (this.boosters.income2x.active) incomeMultiplier *= 2;
-                if (this.isVIP) incomeMultiplier *= 1.5; // VIP gets 50% more income
-
-                const actualIncome = Math.floor(this.totalIncome * incomeMultiplier);
+                const actualIncome = Math.floor(this.totalIncome);
                 this.money += actualIncome;
                 this.lifetimeEarnings += actualIncome;
                 this.updateHUD();
                 for (let ped of this.pedestals) {
                     if (ped.item && ped.unlocked) {
-                        this.spawnIncomeParticle(ped.x + ped.width/2, ped.y, Math.floor(ped.item.income * incomeMultiplier));
+                        this.spawnIncomeParticle(ped.x + ped.width/2, ped.y, Math.floor(ped.item.income));
                     }
                 }
             }
@@ -1466,188 +1450,12 @@ class Game {
         ctx.fillStyle = '#888';
         ctx.font = '9px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillText('[TAB] Shop | [Q] Stats | [R] Rebirth | [C] Collection | [P] Premium | [1-3] Floors', 20, H - 60);
-
-        // Active boosters display
-        this.drawActiveBuffs(ctx, W);
+        ctx.fillText('[TAB] Shop | [Q] Stats | [R] Rebirth | [C] Collection | [G] Bonus | [1-3] Floors', 20, H - 60);
 
         if (this.shopOpen) this.drawShopPanel(ctx, W, H);
         if (this.statsOpen) this.drawStatsPanel(ctx, W, H);
         if (this.rebirthOpen) this.drawRebirthPanel(ctx, W, H);
         if (this.collectionOpen) this.drawCollectionPanel(ctx, W, H);
-        if (this.donateShopOpen) this.drawDonateShopPanel(ctx, W, H);
-    }
-
-    drawActiveBuffs(ctx, W) {
-        let buffY = 110;
-
-        if (this.isVIP) {
-            ctx.fillStyle = '#ffd700';
-            ctx.font = 'bold 10px "Press Start 2P"';
-            ctx.textAlign = 'right';
-            ctx.fillText('★ VIP ACTIVE ★', W - 20, buffY);
-            buffY += 18;
-        }
-
-        const now = Date.now();
-        if (this.boosters.income2x.active) {
-            const remaining = Math.ceil((this.boosters.income2x.endTime - now) / 60000);
-            ctx.fillStyle = '#4caf50';
-            ctx.font = '9px "Press Start 2P"';
-            ctx.fillText('x2 INCOME ' + remaining + 'm', W - 20, buffY);
-            buffY += 15;
-        }
-        if (this.boosters.spawn2x.active) {
-            const remaining = Math.ceil((this.boosters.spawn2x.endTime - now) / 60000);
-            ctx.fillStyle = '#2196f3';
-            ctx.font = '9px "Press Start 2P"';
-            ctx.fillText('x2 SPAWN ' + remaining + 'm', W - 20, buffY);
-            buffY += 15;
-        }
-        if (this.boosters.lucky2x.active) {
-            const remaining = Math.ceil((this.boosters.lucky2x.endTime - now) / 60000);
-            ctx.fillStyle = '#9c27b0';
-            ctx.font = '9px "Press Start 2P"';
-            ctx.fillText('x2 LUCK ' + remaining + 'm', W - 20, buffY);
-        }
-    }
-
-    drawDonateShopPanel(ctx, W, H) {
-        const panelW = 450;
-        const panelH = 400;
-        const panelX = (W - panelW) / 2;
-        const panelY = (H - panelH) / 2;
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.97)';
-        ctx.fillRect(panelX, panelY, panelW, panelH);
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(panelX, panelY, panelW, panelH);
-
-        ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 14px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('★ PREMIUM SHOP ★', panelX + panelW/2, panelY + 25);
-
-        // VIP Section
-        ctx.fillStyle = this.isVIP ? '#4caf50' : '#fff';
-        ctx.font = 'bold 10px "Press Start 2P"';
-        ctx.fillText(this.isVIP ? '✓ VIP ACTIVE' : 'VIP STATUS', panelX + panelW/2, panelY + 55);
-
-        ctx.fillStyle = '#aaa';
-        ctx.font = '7px "Press Start 2P"';
-        ctx.fillText('+50% income, +20% spawn, +30% luck', panelX + panelW/2, panelY + 72);
-
-        if (!this.isVIP) {
-            ctx.fillStyle = '#4caf50';
-            ctx.font = 'bold 9px "Press Start 2P"';
-            ctx.fillText(this.ethPrices.vip + ' ETH (Permanent)', panelX + panelW/2, panelY + 90);
-        }
-
-        // Boosters Section
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText('BOOSTERS (1 hour):', panelX + 20, panelY + 125);
-
-        const boosters = [
-            { key: 'income2x', name: 'x2 Income', price: this.ethPrices.incomeBoost2x, color: '#4caf50', y: 150 },
-            { key: 'spawn2x', name: 'x2 Spawn Rate', price: this.ethPrices.spawnBoost2x, color: '#2196f3', y: 185 },
-            { key: 'lucky2x', name: 'x2 Luck', price: this.ethPrices.luckyBoost, color: '#9c27b0', y: 220 }
-        ];
-
-        this.donateButtons = [];
-
-        boosters.forEach(b => {
-            const isActive = this.boosters[b.key].active;
-            const btnX = panelX + 20;
-            const btnY = panelY + b.y;
-            const btnW = panelW - 40;
-            const btnH = 28;
-
-            this.donateButtons.push({ x: btnX, y: btnY, w: btnW, h: btnH, action: 'booster', key: b.key });
-
-            ctx.fillStyle = isActive ? '#1a3a1a' : '#1a1a2e';
-            ctx.fillRect(btnX, btnY, btnW, btnH);
-            ctx.strokeStyle = isActive ? '#4caf50' : b.color;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(btnX, btnY, btnW, btnH);
-
-            ctx.fillStyle = isActive ? '#4caf50' : '#fff';
-            ctx.font = '9px "Press Start 2P"';
-            ctx.textAlign = 'left';
-            ctx.fillText(b.name + (isActive ? ' (ACTIVE)' : ''), btnX + 10, btnY + 18);
-
-            if (!isActive) {
-                ctx.fillStyle = '#ffd700';
-                ctx.textAlign = 'right';
-                ctx.fillText(b.price + ' ETH', btnX + btnW - 10, btnY + 18);
-            }
-        });
-
-        // Instant purchases
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText('INSTANT PURCHASES:', panelX + 20, panelY + 270);
-
-        // Instant slot
-        const slotBtnY = panelY + 285;
-        this.donateButtons.push({ x: panelX + 20, y: slotBtnY, w: panelW - 40, h: 28, action: 'instantSlot' });
-
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(panelX + 20, slotBtnY, panelW - 40, 28);
-        ctx.strokeStyle = '#ff9800';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(panelX + 20, slotBtnY, panelW - 40, 28);
-
-        ctx.fillStyle = '#fff';
-        ctx.font = '9px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText('Unlock Next Slot', panelX + 30, slotBtnY + 18);
-        ctx.fillStyle = '#ffd700';
-        ctx.textAlign = 'right';
-        ctx.fillText(this.ethPrices.slot + ' ETH', panelX + panelW - 30, slotBtnY + 18);
-
-        // Instant rebirth
-        const rebirthBtnY = panelY + 320;
-        this.donateButtons.push({ x: panelX + 20, y: rebirthBtnY, w: panelW - 40, h: 28, action: 'instantRebirth' });
-
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(panelX + 20, rebirthBtnY, panelW - 40, 28);
-        ctx.strokeStyle = '#ff00ff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(panelX + 20, rebirthBtnY, panelW - 40, 28);
-
-        ctx.fillStyle = '#fff';
-        ctx.font = '9px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText('Instant Rebirth (skip requirements)', panelX + 30, rebirthBtnY + 18);
-        ctx.fillStyle = '#ffd700';
-        ctx.textAlign = 'right';
-        ctx.fillText(this.ethPrices.rebirth + ' ETH', panelX + panelW - 30, rebirthBtnY + 18);
-
-        // VIP button
-        if (!this.isVIP) {
-            const vipBtnY = panelY + 355;
-            this.donateButtons.push({ x: panelX + 20, y: vipBtnY, w: panelW - 40, h: 28, action: 'buyVIP' });
-
-            ctx.fillStyle = '#3d2d00';
-            ctx.fillRect(panelX + 20, vipBtnY, panelW - 40, 28);
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(panelX + 20, vipBtnY, panelW - 40, 28);
-
-            ctx.fillStyle = '#ffd700';
-            ctx.font = 'bold 9px "Press Start 2P"';
-            ctx.textAlign = 'center';
-            ctx.fillText('★ BUY VIP - ' + this.ethPrices.vip + ' ETH ★', panelX + panelW/2, vipBtnY + 18);
-        }
-
-        ctx.fillStyle = '#666';
-        ctx.font = '7px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('Click to purchase (ETH payments simulated)', panelX + panelW/2, panelY + panelH - 10);
     }
 
     drawCollectionPanel(ctx, W, H) {
@@ -1780,7 +1588,7 @@ class Game {
 
     drawShopPanel(ctx, W, H) {
         const panelW = 380;
-        const panelH = 420;
+        const panelH = 520;
         const panelX = (W - panelW) / 2;
         const panelY = (H - panelH) / 2;
 
@@ -1796,6 +1604,7 @@ class Game {
         ctx.fillText('★ UPGRADES ★', panelX + panelW/2, panelY + 30);
 
         this.shopUpgradeBoxes = [];
+        this.shopAdButtons = [];
         let i = 0;
         for (let [key, upg] of Object.entries(this.upgrades)) {
             const y = panelY + 55 + i * 50;
@@ -1832,7 +1641,7 @@ class Game {
             i++;
         }
 
-        // Slot purchase
+        // Slot purchase with money
         const slotY = panelY + 55 + i * 50;
         const slotCost = (this.unlockedSlots < this.maxSlots && this.slotPrices[this.unlockedSlots] !== undefined) ? this.slotPrices[this.unlockedSlots] : 0;
         const canBuySlot = this.unlockedSlots < this.maxSlots && slotCost > 0 && this.money >= slotCost;
@@ -1854,7 +1663,7 @@ class Game {
         ctx.font = '9px "Press Start 2P"';
         const slotText = this.unlockedSlots < this.maxSlots
             ? 'Buy Slot #' + (this.unlockedSlots + 1)
-            : 'MAX SLOTS (Rebirth for more)';
+            : 'MAX SLOTS';
         ctx.fillText(slotText, panelX + 60, slotY + 25);
 
         if (this.unlockedSlots < this.maxSlots && slotCost > 0) {
@@ -1862,17 +1671,68 @@ class Game {
             ctx.textAlign = 'right';
             ctx.font = '9px "Press Start 2P"';
             ctx.fillText('$' + this.formatNum(slotCost), panelX + panelW - 22, slotY + 18);
-
-            // ETH option for slot
-            ctx.fillStyle = '#4caf50';
-            ctx.font = '7px "Press Start 2P"';
-            ctx.fillText('or ' + this.ethPrices.slot + ' ETH', panelX + panelW - 22, slotY + 32);
         }
+
+        // === AD REWARDS SECTION ===
+        const adSectionY = slotY + 55;
+        ctx.fillStyle = '#9c27b0';
+        ctx.font = 'bold 10px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('★ WATCH ADS ★', panelX + panelW/2, adSectionY);
+
+        // Free slot button (ad)
+        const freeSlotY = adSectionY + 15;
+        const canGetFreeSlot = this.unlockedSlots < this.maxSlots;
+        const freeSlotBox = { x: panelX + 15, y: freeSlotY, w: (panelW - 40) / 2, h: 35, action: 'freeSlot' };
+        this.shopAdButtons.push(freeSlotBox);
+
+        ctx.fillStyle = canGetFreeSlot ? '#4a1a6a' : '#1a1a2e';
+        ctx.fillRect(freeSlotBox.x, freeSlotBox.y, freeSlotBox.w, freeSlotBox.h);
+        ctx.strokeStyle = canGetFreeSlot ? '#9c27b0' : '#333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(freeSlotBox.x, freeSlotBox.y, freeSlotBox.w, freeSlotBox.h);
+
+        ctx.fillStyle = canGetFreeSlot ? '#fff' : '#666';
+        ctx.font = '7px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('FREE SLOT', freeSlotBox.x + freeSlotBox.w/2, freeSlotY + 15);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '6px "Press Start 2P"';
+        ctx.fillText('[WATCH AD]', freeSlotBox.x + freeSlotBox.w/2, freeSlotY + 28);
+
+        // Golden slot button (ad)
+        const goldenSlotBox = { x: panelX + 25 + (panelW - 40) / 2, y: freeSlotY, w: (panelW - 40) / 2, h: 35, action: 'goldenSlot' };
+        this.shopAdButtons.push(goldenSlotBox);
+
+        ctx.fillStyle = '#4a3a00';
+        ctx.fillRect(goldenSlotBox.x, goldenSlotBox.y, goldenSlotBox.w, goldenSlotBox.h);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(goldenSlotBox.x, goldenSlotBox.y, goldenSlotBox.w, goldenSlotBox.h);
+
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '7px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('★ GOLDEN', goldenSlotBox.x + goldenSlotBox.w/2, freeSlotY + 15);
+        ctx.fillStyle = '#fff';
+        ctx.font = '6px "Press Start 2P"';
+        ctx.fillText('[WATCH AD]', goldenSlotBox.x + goldenSlotBox.w/2, freeSlotY + 28);
+
+        // Golden slot info
+        ctx.fillStyle = '#888';
+        ctx.font = '6px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('Golden slots keep mobs after Rebirth!', panelX + panelW/2, adSectionY + 62);
+
+        // Count golden slots
+        const goldenCount = this.pedestals.filter(p => p.golden).length;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('Golden: ' + goldenCount + '/' + this.unlockedSlots, panelX + panelW/2, adSectionY + 75);
 
         ctx.fillStyle = '#888';
         ctx.font = '8px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Click/number to buy | [TAB] close', panelX + panelW/2, panelY + panelH - 12);
+        ctx.fillText('Click to buy | [TAB] close', panelX + panelW/2, panelY + panelH - 12);
     }
 
     drawStatsPanel(ctx, W, H) {
@@ -1978,23 +1838,7 @@ class Game {
 
         ctx.fillStyle = canRebirth ? '#fff' : '#666';
         ctx.font = 'bold 9px "Press Start 2P"';
-        ctx.fillText('FREE REBIRTH', btnX + btnW/2, btnY + 22);
-
-        // ETH Rebirth button (always available)
-        const ethBtnX = panelX + panelW - 30 - btnW;
-        ctx.fillStyle = '#1a5d1a';
-        ctx.fillRect(ethBtnX, btnY, btnW, btnH);
-        ctx.strokeStyle = '#4caf50';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(ethBtnX, btnY, btnW, btnH);
-
-        ctx.fillStyle = '#4caf50';
-        ctx.font = 'bold 8px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('⚡ ' + this.ethPrices.rebirth + ' ETH', ethBtnX + btnW/2, btnY + 14);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 7px "Press Start 2P"';
-        ctx.fillText('INSTANT REBIRTH', ethBtnX + btnW/2, btnY + 28);
+        ctx.fillText('REBIRTH', btnX + btnW/2, btnY + 22);
 
         ctx.fillStyle = '#888';
         ctx.font = '8px "Press Start 2P"';
@@ -2187,18 +2031,45 @@ class Game {
 
             const pedGrad = ctx.createLinearGradient(ped.x, ped.y, ped.x, ped.y + ped.height);
             if (ped.unlocked) {
-                pedGrad.addColorStop(0, near ? '#5a6577' : '#4a5568');
-                pedGrad.addColorStop(1, near ? '#4a5568' : '#2d3748');
+                // Golden slots have golden gradient
+                if (ped.golden) {
+                    pedGrad.addColorStop(0, near ? '#c9a227' : '#9a7b0a');
+                    pedGrad.addColorStop(1, near ? '#9a7b0a' : '#6b5607');
+                } else {
+                    pedGrad.addColorStop(0, near ? '#5a6577' : '#4a5568');
+                    pedGrad.addColorStop(1, near ? '#4a5568' : '#2d3748');
+                }
             } else {
-                pedGrad.addColorStop(0, '#2a2a2a');
-                pedGrad.addColorStop(1, '#1a1a1a');
+                // Locked slot with frozen item shows ice color
+                if (ped.frozenItem) {
+                    pedGrad.addColorStop(0, '#4a6a8a');
+                    pedGrad.addColorStop(1, '#2a4a6a');
+                } else {
+                    pedGrad.addColorStop(0, '#2a2a2a');
+                    pedGrad.addColorStop(1, '#1a1a1a');
+                }
             }
             ctx.fillStyle = pedGrad;
             ctx.fillRect(ped.x, ped.y, ped.width, ped.height);
 
-            ctx.strokeStyle = ped.unlocked ? (near ? '#f6e05e' : '#4a5568') : '#333';
-            ctx.lineWidth = near ? 3 : 2;
+            // Golden border for golden slots
+            if (ped.golden) {
+                ctx.strokeStyle = near ? '#ffd700' : '#c9a227';
+                ctx.lineWidth = near ? 4 : 3;
+            } else {
+                ctx.strokeStyle = ped.unlocked ? (near ? '#f6e05e' : '#4a5568') : '#333';
+                ctx.lineWidth = near ? 3 : 2;
+            }
             ctx.strokeRect(ped.x, ped.y, ped.width, ped.height);
+
+            // Draw golden star indicator
+            if (ped.golden) {
+                ctx.fillStyle = '#ffd700';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText('★', ped.x + 2, ped.y + 2);
+            }
 
             if (!ped.item) {
                 ctx.fillStyle = ped.unlocked ? '#2d3748' : '#1a1a1a';
@@ -2210,11 +2081,27 @@ class Game {
                 ctx.stroke();
 
                 if (!ped.unlocked) {
-                    ctx.fillStyle = '#666';
-                    ctx.font = '16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('🔒', ped.x + ped.width/2, ped.y + ped.height/2 - 5);
+                    // Show frozen item preview or lock
+                    if (ped.frozenItem) {
+                        // Draw frozen item (with ice effect)
+                        ctx.globalAlpha = 0.6;
+                        ctx.fillStyle = '#aaddff';
+                        ctx.font = '20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(ped.frozenItem.icon, ped.x + ped.width/2, ped.y + ped.height/2 - 5);
+                        ctx.globalAlpha = 1;
+                        // Ice crystal overlay
+                        ctx.fillStyle = '#00bcd4';
+                        ctx.font = '10px Arial';
+                        ctx.fillText('❄', ped.x + ped.width/2 + 15, ped.y + ped.height/2 - 15);
+                    } else {
+                        ctx.fillStyle = '#666';
+                        ctx.font = '16px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🔒', ped.x + ped.width/2, ped.y + ped.height/2 - 5);
+                    }
                 }
             }
 
@@ -2416,8 +2303,6 @@ class Game {
             soundEnabled: this.soundEnabled,
             lastSaveTime: Date.now(),
             totalIncome: this.totalIncome,
-            isVIP: this.isVIP,
-            boosters: this.boosters,
             upgrades: {},
             pedestals: []
         };
@@ -2445,20 +2330,61 @@ class Game {
             }
         }
 
-        try {
-            localStorage.setItem('stealAShitCoin_save_v2', JSON.stringify(saveData));
-        } catch(e) {
-            console.log('Save failed:', e);
+        // Save to Yandex Cloud if available
+        if (yandexPlayer) {
+            yandexPlayer.setData(saveData, true).then(() => {
+                console.log('Cloud save successful');
+            }).catch(e => {
+                console.log('Cloud save failed, using localStorage:', e.message);
+                this.saveToLocalStorage(saveData);
+            });
+        } else {
+            this.saveToLocalStorage(saveData);
         }
     }
 
-    loadGame() {
+    saveToLocalStorage(saveData) {
         try {
-            const saved = localStorage.getItem('stealAShitCoin_save_v2');
-            if (!saved) return;
+            localStorage.setItem('stealACoin_save_v3', JSON.stringify(saveData));
+        } catch(e) {
+            console.log('Local save failed:', e);
+        }
+    }
 
-            const data = JSON.parse(saved);
+    async loadGame() {
+        let data = null;
 
+        // Try to load from Yandex Cloud first
+        if (yandexPlayer) {
+            try {
+                data = await yandexPlayer.getData();
+                if (data && Object.keys(data).length > 0) {
+                    console.log('Loaded from Yandex Cloud');
+                } else {
+                    data = null;
+                }
+            } catch (e) {
+                console.log('Cloud load failed:', e.message);
+            }
+        }
+
+        // Fallback to localStorage
+        if (!data) {
+            try {
+                const saved = localStorage.getItem('stealACoin_save_v3') ||
+                              localStorage.getItem('stealACoin_save_v2');
+                if (saved) {
+                    data = JSON.parse(saved);
+                    console.log('Loaded from localStorage');
+                }
+            } catch (e) {
+                console.log('Local load failed:', e);
+            }
+        }
+
+        if (!data) return;
+
+        try {
             this.money = data.money || 100;
             this.lifetimeEarnings = data.lifetimeEarnings || 0;
             this.totalMerges = data.totalMerges || 0;
@@ -2469,18 +2395,6 @@ class Game {
             this.maxSlots = data.maxSlots || 36;
             this.currentFloor = data.currentFloor || 1;
             this.soundEnabled = data.soundEnabled !== false;
-            this.isVIP = data.isVIP || false;
-
-            // Restore boosters (check if still active)
-            if (data.boosters) {
-                const now = Date.now();
-                for (let key in data.boosters) {
-                    if (this.boosters[key]) {
-                        this.boosters[key].active = data.boosters[key].active && now < data.boosters[key].endTime;
-                        this.boosters[key].endTime = data.boosters[key].endTime || 0;
-                    }
-                }
-            }
 
             if (data.upgrades) {
                 for (let key in data.upgrades) {
@@ -2524,15 +2438,83 @@ class Game {
 
             console.log('Game loaded successfully!');
         } catch(e) {
-            console.log('Load failed:', e);
+            console.log('Load parse failed:', e);
         }
     }
 
     resetGame() {
         if (confirm('Are you sure you want to reset ALL progress? This cannot be undone!')) {
-            localStorage.removeItem('stealAShitCoin_save_v2');
+            localStorage.removeItem('stealACoin_save_v2');
+            localStorage.removeItem('stealACoin_save_v3');
+            // Clear cloud save
+            if (yandexPlayer) {
+                yandexPlayer.setData({}, true).catch(e => console.log('Cloud clear failed:', e));
+            }
             location.reload();
         }
+    }
+
+    // Show rewarded ad for bonus money
+    showRewardedAd() {
+        if (!ysdk) {
+            this.addFloatingText(550, 350, 'Ads not available', '#ff0000');
+            return;
+        }
+
+        ysdk.adv.showRewardedVideo({
+            callbacks: {
+                onOpen: () => {
+                    console.log('Rewarded ad opened');
+                    this.soundEnabled = false; // Mute during ad
+                },
+                onRewarded: () => {
+                    console.log('Rewarded!');
+                    // Calculate bonus based on player progress:
+                    // - 60 seconds of income (1 minute)
+                    // - OR 10% of current money
+                    // - OR minimum based on rebirth level
+                    const incomeBonus = Math.floor(this.totalIncome * 60);
+                    const moneyBonus = Math.floor(this.money * 0.1);
+                    const minBonus = Math.floor(100 * this.rebirthMultiplier * (this.rebirthLevel + 1));
+                    const bonus = Math.max(incomeBonus, moneyBonus, minBonus);
+
+                    this.money += bonus;
+                    this.lifetimeEarnings += bonus;
+                    this.addFloatingText(550, 300, '+$' + this.formatNum(bonus) + ' BONUS!', '#ffd700');
+                    this.playSound(800, 500);
+                    this.updateHUD();
+                    this.saveGame();
+                },
+                onClose: () => {
+                    console.log('Rewarded ad closed');
+                    this.soundEnabled = true; // Restore sound
+                },
+                onError: (e) => {
+                    console.log('Rewarded ad error:', e);
+                    this.addFloatingText(550, 350, 'Ad not available', '#ff0000');
+                }
+            }
+        });
+    }
+
+    // Show fullscreen ad (between levels/rebirths)
+    showFullscreenAd() {
+        if (!ysdk) return;
+
+        ysdk.adv.showFullscreenAdv({
+            callbacks: {
+                onOpen: () => {
+                    this.soundEnabled = false;
+                },
+                onClose: (wasShown) => {
+                    this.soundEnabled = true;
+                    console.log('Fullscreen ad closed, wasShown:', wasShown);
+                },
+                onError: (e) => {
+                    console.log('Fullscreen ad error:', e);
+                }
+            }
+        });
     }
 
     loop(time) {
@@ -2548,4 +2530,33 @@ class Game {
     }
 }
 
-window.onload = () => new Game();
+// Initialize Yandex SDK and start game
+window.onload = async () => {
+    try {
+        // Initialize Yandex Games SDK
+        ysdk = await YaGames.init();
+        console.log('Yandex SDK initialized');
+
+        // Get player for cloud saves
+        try {
+            yandexPlayer = await ysdk.getPlayer({ scopes: false });
+            console.log('Yandex Player initialized');
+        } catch (e) {
+            console.log('Player init failed, using local saves:', e.message);
+        }
+
+        // Create game instance
+        const game = new Game();
+        window.game = game;
+
+        // Signal that game is ready
+        ysdk.features.LoadingAPI?.ready();
+        console.log('Game Ready signal sent');
+
+    } catch (e) {
+        console.log('Yandex SDK not available, running in standalone mode:', e.message);
+        // Fallback: run without SDK
+        const game = new Game();
+        window.game = game;
+    }
+};

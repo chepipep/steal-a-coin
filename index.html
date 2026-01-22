@@ -3,54 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="base:app_id" content="696aa2796b2e86fd30456136">
 
-    <!-- Open Graph / Mini App Meta Tags -->
-    <meta property="og:title" content="Steal A ShitCoin">
-    <meta property="og:description" content="Crypto idle tycoon game. Merge shitcoins and become the ultimate crypto mogul!">
-    <meta property="og:image" content="https://chepipep.github.io/Steal-A-Shitcoin/icon.svg">
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Steal A Coin">
+    <meta property="og:description" content="Idle tycoon game. Merge coins and become the ultimate mogul!">
+    <meta property="og:image" content="icon.svg">
     <meta property="og:type" content="website">
 
-    <!-- Farcaster Frame Meta Tags -->
-    <meta property="fc:frame" content="vNext">
-    <meta property="fc:frame:image" content="https://chepipep.github.io/Steal-A-Shitcoin/icon.svg">
-    <meta property="fc:frame:button:1" content="Play Game">
-    <meta property="fc:frame:button:1:action" content="launch_frame">
-    <meta property="fc:frame:button:1:target" content="https://chepipep.github.io/Steal-A-Shitcoin">
-
-    <title>Steal A ShitCoin</title>
+    <title>Steal A Coin</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
-
-    <!-- Farcaster Mini App SDK (non-blocking) -->
-    <script type="module">
-        (async () => {
-            try {
-                const { sdk } = await import('https://esm.sh/@farcaster/miniapp-sdk');
-                window.farcasterSdk = sdk;
-                await sdk.actions.ready();
-                console.log('Farcaster Mini App ready');
-            } catch (e) {
-                console.log('Not in Farcaster client or SDK failed:', e.message);
-            }
-        })();
-    </script>
+    <!-- Yandex Games SDK -->
+    <script src="/sdk.js"></script>
 </head>
 <body>
     <div id="game-container">
         <div id="menu-screen">
-            <h1 class="title">STEAL A SHITCOIN</h1>
-            <p class="subtitle">Crypto Tycoon</p>
+            <h1 class="title">STEAL A COIN</h1>
+            <p class="subtitle">Idle Tycoon</p>
             <button id="play-btn" class="btn">PLAY</button>
             <button id="reset-btn" class="btn btn-small hidden">RESET SAVE</button>
             <div class="menu-hint">
                 <p>WASD - Move | E - Interact</p>
                 <p>TAB - Shop | Q - Stats | M - Sound</p>
                 <p>Merge same coins = Level Up!</p>
-                <p>Shift+R - Prestige | P - Premium Shop</p>
+                <p>R - Rebirth | C - Collection | G - Bonus</p>
                 <p>1/2/3 - Switch floors</p>
             </div>
-            <div id="wallet-status" class="wallet-status">Connect wallet to pay with ETH</div>
         </div>
 
         <div id="game-screen" class="hidden">
@@ -71,7 +49,6 @@
             </div>
         </div>
     </div>
-    <script src="web3integration.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
