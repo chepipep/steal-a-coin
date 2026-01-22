@@ -317,6 +317,8 @@ class Game {
         document.getElementById('play-btn').onclick = () => {
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
+            // Signal gameplay start to Yandex
+            if (ysdk && ysdk.features.GameplayAPI) { ysdk.features.GameplayAPI.start(); }
         };
 
         document.getElementById('reset-btn').onclick = () => {
@@ -970,6 +972,7 @@ class Game {
         ysdk.adv.showRewardedVideo({
             callbacks: {
                 onOpen: () => {
+                    if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.stop();
                     this.soundEnabled = false;
                 },
                 onRewarded: () => {
@@ -1007,6 +1010,7 @@ class Game {
         ysdk.adv.showRewardedVideo({
             callbacks: {
                 onOpen: () => {
+                    if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.stop();
                     this.soundEnabled = false;
                 },
                 onRewarded: () => {
@@ -2464,6 +2468,7 @@ class Game {
         ysdk.adv.showRewardedVideo({
             callbacks: {
                 onOpen: () => {
+                    if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.stop();
                     console.log('Rewarded ad opened');
                     this.soundEnabled = false; // Mute during ad
                 },
@@ -2487,7 +2492,8 @@ class Game {
                 },
                 onClose: () => {
                     console.log('Rewarded ad closed');
-                    this.soundEnabled = true; // Restore sound
+                    this.soundEnabled = true;
+                    if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.start();
                 },
                 onError: (e) => {
                     console.log('Rewarded ad error:', e);
@@ -2504,11 +2510,13 @@ class Game {
         ysdk.adv.showFullscreenAdv({
             callbacks: {
                 onOpen: () => {
+                    if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.stop();
                     this.soundEnabled = false;
                 },
                 onClose: (wasShown) => {
                     this.soundEnabled = true;
                     console.log('Fullscreen ad closed, wasShown:', wasShown);
+                    if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.start();
                 },
                 onError: (e) => {
                     console.log('Fullscreen ad error:', e);
