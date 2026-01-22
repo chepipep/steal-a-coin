@@ -35,11 +35,11 @@ class Game {
 
         // Upgrades (base cost 150 so player needs to grind first)
         this.upgrades = {
-            incomeBoost: { level: 0, baseCost: 150, costMult: 2.0, effect: 0.03, name: 'Income Boost', desc: '+3% income' },
-            spawnRate: { level: 0, baseCost: 150, costMult: 2.2, effect: 0.008, name: 'Spawn Rate', desc: '+0.8% spawn rate' },
-            luckyRolls: { level: 0, baseCost: 200, costMult: 2.4, effect: 0.2, name: 'Lucky Rolls', desc: '+0.2% rare chance' },
-            cheaperCoins: { level: 0, baseCost: 150, costMult: 2.1, effect: 0.008, name: 'Discount', desc: '-0.8% prices' },
-            mutationChance: { level: 0, baseCost: 1000, costMult: 2.8, effect: 0.3, name: 'Mutagen', desc: '+0.3% mutation' }
+            incomeBoost: { level: 0, baseCost: 150, costMult: 2.0, effect: 0.03, name: 'Доход', desc: '+3% доход' },
+            spawnRate: { level: 0, baseCost: 150, costMult: 2.2, effect: 0.008, name: 'Спавн', desc: '+0.8% спавн' },
+            luckyRolls: { level: 0, baseCost: 200, costMult: 2.4, effect: 0.2, name: 'Удача', desc: '+0.2% редкие' },
+            cheaperCoins: { level: 0, baseCost: 150, costMult: 2.1, effect: 0.008, name: 'Скидка', desc: '-0.8% цены' },
+            mutationChance: { level: 0, baseCost: 1000, costMult: 2.8, effect: 0.3, name: 'Мутаген', desc: '+0.3% мутация' }
         };
 
         // UI state
@@ -53,10 +53,10 @@ class Game {
 
         // Mutations (rare - balanced for monetization)
         this.mutations = {
-            gold:        { color: '#ffd700', glow: '#fff9c4', name: 'GOLD', chance: 0.8, incomeMultiplier: 3, priceMultiplier: 2.5 },
-            diamond:     { color: '#b9f2ff', glow: '#e0ffff', name: 'DIAMOND', chance: 0.3, incomeMultiplier: 5, priceMultiplier: 4 },
-            darkMatter:  { color: '#4a0080', glow: '#9932cc', name: 'DARK MATTER', chance: 0.08, incomeMultiplier: 10, priceMultiplier: 8 },
-            rainbow:     { color: 'rainbow', glow: '#ffffff', name: 'RAINBOW', chance: 0.02, incomeMultiplier: 25, priceMultiplier: 15 }
+            gold:        { color: '#ffd700', glow: '#fff9c4', name: 'ЗОЛОТО', chance: 0.8, incomeMultiplier: 3, priceMultiplier: 2.5 },
+            diamond:     { color: '#b9f2ff', glow: '#e0ffff', name: 'АЛМАЗ', chance: 0.3, incomeMultiplier: 5, priceMultiplier: 4 },
+            darkMatter:  { color: '#4a0080', glow: '#9932cc', name: 'ТЁМНАЯ МАТЕРИЯ', chance: 0.08, incomeMultiplier: 10, priceMultiplier: 8 },
+            rainbow:     { color: 'rainbow', glow: '#ffffff', name: 'РАДУГА', chance: 0.02, incomeMultiplier: 25, priceMultiplier: 15 }
         };
 
         // Rarities (harder to get rare ones)
@@ -487,7 +487,7 @@ class Game {
         ctx.fillStyle = '#f6e05e';
         ctx.font = 'bold 16px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('★ YOUR BASE ★', bx + bw/2, by - 12);
+        ctx.fillText('★ ТВОЯ БАЗА ★', bx + bw/2, by - 12);
 
         // Conveyor static parts (rails, edges - NOT animated stripes)
         const cy = 45, ch = 110;
@@ -518,7 +518,7 @@ class Game {
         ctx.fillStyle = '#a0aec0';
         ctx.font = 'bold 12px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('◄◄ CONVEYOR - BUY WITH [E] ◄◄', 550, cy - 18);
+        ctx.fillText('◄◄ КОНВЕЙЕР - КУПИТЬ [E] ◄◄', 550, cy - 18);
 
         // Bottom decorative bar
         ctx.fillStyle = '#1a1a2e';
@@ -677,7 +677,7 @@ class Game {
                         this.player.heldItem = null;
                         this.totalMerges++;
                         this.calcIncome();
-                        this.addFloatingText(ped.x + ped.width/2, ped.y - 20, 'LEVEL ' + ped.item.level + '!', '#ffeb3b');
+                        this.addFloatingText(ped.x + ped.width/2, ped.y - 20, 'УРОВЕНЬ ' + ped.item.level + '!', '#ffeb3b');
                         this.spawnMergeExplosion(ped.x + ped.width/2, ped.y + ped.height/2, ped.item);
                         this.playSound(600, 1000);
                         this.saveGame();
@@ -707,7 +707,7 @@ class Game {
                     this.playSound(400, 600);
                     this.updateHUD();
                 } else {
-                    this.addFloatingText(px, py - 50, 'Need $' + this.formatNum(item.price) + '!', '#f44336');
+                    this.addFloatingText(px, py - 50, 'Нужно $' + this.formatNum(item.price) + '!', '#f44336');
                     this.playSound(150, 100);
                 }
                 return;
@@ -908,7 +908,7 @@ class Game {
             this.money -= cost;
             upg.level++;
             this.playSound(500, 800);
-            this.addFloatingText(this.player.x + 25, this.player.y - 30, upg.name + ' UP!', '#ffd700');
+            this.addFloatingText(this.player.x + 25, this.player.y - 30, upg.name + ' УЛУЧШЕН!', '#ffd700');
             this.updateHUD();
             this.calcIncome();
             this.saveGame();
@@ -919,7 +919,7 @@ class Game {
 
     buySlot() {
         if (this.unlockedSlots >= this.maxSlots) {
-            this.addFloatingText(450, 300, 'Max slots! Do Rebirth for more!', '#ff9800');
+            this.addFloatingText(450, 300, 'Макс слотов! Сделай Перерождение!', '#ff9800');
             this.playSound(150, 100);
             return;
         }
@@ -944,11 +944,11 @@ class Game {
         if (ped.frozenItem) {
             ped.item = ped.frozenItem;
             ped.frozenItem = null;
-            this.addFloatingText(450, 280, 'FROZEN MOB RESTORED!', '#00bcd4');
+            this.addFloatingText(450, 280, 'ЗАМОРОЖЕННЫЙ МОБ ВОССТАНОВЛЕН!', '#00bcd4');
         }
 
         this.playSound(600, 1200);
-        this.addFloatingText(450, 300, 'SLOT ' + this.unlockedSlots + ' UNLOCKED!', '#4caf50');
+        this.addFloatingText(450, 300, 'СЛОТ ' + this.unlockedSlots + ' ОТКРЫТ!', '#4caf50');
         this.calcIncome();
         this.updateHUD();
         this.saveGame();
@@ -957,13 +957,13 @@ class Game {
     // Unlock slot by watching ad (no cost, no requirements)
     unlockSlotWithAd() {
         if (this.unlockedSlots >= this.maxSlots) {
-            this.addFloatingText(450, 300, 'All slots unlocked!', '#ff9800');
+            this.addFloatingText(450, 300, 'Все слоты открыты!', '#ff9800');
             this.playSound(150, 100);
             return;
         }
 
         if (!ysdk) {
-            this.addFloatingText(550, 350, 'Ads not available', '#ff0000');
+            this.addFloatingText(550, 350, 'Реклама недоступна', '#ff0000');
             return;
         }
 
@@ -974,14 +974,14 @@ class Game {
                 },
                 onRewarded: () => {
                     this.unlockNextSlot();
-                    this.addFloatingText(450, 250, 'FREE SLOT!', '#ffd700');
+                    this.addFloatingText(450, 250, 'БЕСПЛАТНЫЙ СЛОТ!', '#ffd700');
                 },
                 onClose: () => {
                     this.soundEnabled = true;
                 },
                 onError: (e) => {
                     console.log('Ad error:', e);
-                    this.addFloatingText(550, 350, 'Ad not available', '#ff0000');
+                    this.addFloatingText(550, 350, 'Реклама недоступна', '#ff0000');
                 }
             }
         });
@@ -991,16 +991,16 @@ class Game {
     makeSlotGolden(slotIndex) {
         const ped = this.pedestals[slotIndex];
         if (!ped || !ped.unlocked) {
-            this.addFloatingText(550, 350, 'Unlock slot first!', '#ff0000');
+            this.addFloatingText(550, 350, 'Сначала открой слот!', '#ff0000');
             return;
         }
         if (ped.golden) {
-            this.addFloatingText(550, 350, 'Already golden!', '#ffd700');
+            this.addFloatingText(550, 350, 'Уже золотой!', '#ffd700');
             return;
         }
 
         if (!ysdk) {
-            this.addFloatingText(550, 350, 'Ads not available', '#ff0000');
+            this.addFloatingText(550, 350, 'Реклама недоступна', '#ff0000');
             return;
         }
 
@@ -1012,7 +1012,7 @@ class Game {
                 onRewarded: () => {
                     ped.golden = true;
                     this.playSound(800, 800);
-                    this.addFloatingText(ped.x + ped.width/2, ped.y, '★ GOLDEN SLOT! ★', '#ffd700');
+                    this.addFloatingText(ped.x + ped.width/2, ped.y, '★ ЗОЛОТОЙ СЛОТ! ★', '#ffd700');
                     this.saveGame();
                 },
                 onClose: () => {
@@ -1020,7 +1020,7 @@ class Game {
                 },
                 onError: (e) => {
                     console.log('Ad error:', e);
-                    this.addFloatingText(550, 350, 'Ad not available', '#ff0000');
+                    this.addFloatingText(550, 350, 'Реклама недоступна', '#ff0000');
                 }
             }
         });
@@ -1090,7 +1090,7 @@ class Game {
         this.spawnConveyorItem(700);
         this.spawnConveyorItem(900);
 
-        this.addFloatingText(550, 350, '★ REBIRTH ' + this.rebirthLevel + '! ★', '#ff00ff');
+        this.addFloatingText(550, 350, '★ ПЕРЕРОЖДЕНИЕ ' + this.rebirthLevel + '! ★', '#ff00ff');
         this.playSound(200, 1500);
         this.rebirthOpen = false;
         this.updateHUD();
@@ -1434,23 +1434,23 @@ class Game {
         ctx.fillStyle = this.soundEnabled ? '#4caf50' : '#666';
         ctx.font = '12px "Press Start 2P"';
         ctx.textAlign = 'right';
-        ctx.fillText('[M] Sound: ' + (this.soundEnabled ? 'ON' : 'OFF'), W - 20, 30);
+        ctx.fillText('[M] Звук: ' + (this.soundEnabled ? 'ВКЛ' : 'ВЫКЛ'), W - 20, 30);
 
         if (this.rebirthLevel > 0) {
             ctx.fillStyle = '#ff00ff';
-            ctx.fillText('★ Rebirth ' + this.rebirthLevel + ' (x' + this.rebirthMultiplier.toFixed(1) + ')', W - 20, 50);
+            ctx.fillText('★ Реинкарн ' + this.rebirthLevel + ' (x' + this.rebirthMultiplier.toFixed(1) + ')', W - 20, 50);
         }
 
         ctx.fillStyle = '#68d391';
-        ctx.fillText('Slots: ' + this.unlockedSlots + '/' + this.maxSlots, W - 20, 70);
+        ctx.fillText('Слоты: ' + this.unlockedSlots + '/' + this.maxSlots, W - 20, 70);
 
         ctx.fillStyle = '#4299e1';
-        ctx.fillText('Floor: ' + this.currentFloor + '/3', W - 20, 90);
+        ctx.fillText('Этаж: ' + this.currentFloor + '/3', W - 20, 90);
 
         ctx.fillStyle = '#888';
         ctx.font = '9px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillText('[TAB] Shop | [Q] Stats | [R] Rebirth | [C] Collection | [G] Bonus | [1-3] Floors', 20, H - 60);
+        ctx.fillText('[TAB] Магазин | [Q] Стата | [R] Реинкарн | [C] Коллекция | [G] Бонус | [1-3] Этажи', 20, H - 60);
 
         if (this.shopOpen) this.drawShopPanel(ctx, W, H);
         if (this.statsOpen) this.drawStatsPanel(ctx, W, H);
@@ -1475,16 +1475,16 @@ class Game {
         ctx.fillStyle = '#9c27b0';
         ctx.font = 'bold 14px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('★ COIN COLLECTION ★', panelX + panelW/2, panelY + 25);
+        ctx.fillText('★ КОЛЛЕКЦИЯ МОНЕТ ★', panelX + panelW/2, panelY + 25);
 
         // Column headers
         ctx.fillStyle = '#888';
         ctx.font = '7px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillText('COIN', panelX + 20, panelY + 50);
-        ctx.fillText('BASE INCOME', panelX + 140, panelY + 50);
-        ctx.fillText('BASE PRICE', panelX + 280, panelY + 50);
-        ctx.fillText('TIER', panelX + 420, panelY + 50);
+        ctx.fillText('МОНЕТА', panelX + 20, panelY + 50);
+        ctx.fillText('ДОХОД', panelX + 140, panelY + 50);
+        ctx.fillText('ЦЕНА', panelX + 280, panelY + 50);
+        ctx.fillText('ТИЕР', panelX + 420, panelY + 50);
 
         // Separator line
         ctx.strokeStyle = '#444';
@@ -1551,14 +1551,14 @@ class Game {
             ctx.fillStyle = '#666';
             ctx.font = '8px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.fillText('↑↓ Scroll (' + (this.collectionScroll + 1) + '-' + Math.min(this.collectionScroll + visibleCount, this.coinTypes.length) + ' of ' + this.coinTypes.length + ')', panelX + panelW/2, panelY + panelH - 60);
+            ctx.fillText('↑↓ Листать (' + (this.collectionScroll + 1) + '-' + Math.min(this.collectionScroll + visibleCount, this.coinTypes.length) + ' из ' + this.coinTypes.length + ')', panelX + panelW/2, panelY + panelH - 60);
         }
 
         // Rarities section (compact layout)
         ctx.fillStyle = '#ffd700';
         ctx.font = 'bold 8px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillText('RARITIES:', panelX + 15, panelY + panelH - 40);
+        ctx.fillText('РЕДКОСТИ:', panelX + 15, panelY + panelH - 40);
 
         const rarityList = Object.entries(this.rarities);
         let rx = panelX + 15;
@@ -1574,7 +1574,7 @@ class Game {
         ctx.fillStyle = '#ff00ff';
         ctx.font = 'bold 8px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillText('MUTATIONS:', panelX + 15, panelY + panelH - 12);
+        ctx.fillText('МУТАЦИИ:', panelX + 15, panelY + panelH - 12);
 
         let mx = panelX + 130;
         for (let [name, data] of Object.entries(this.mutations)) {
@@ -1601,7 +1601,7 @@ class Game {
         ctx.fillStyle = '#ffd700';
         ctx.font = 'bold 16px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('★ UPGRADES ★', panelX + panelW/2, panelY + 30);
+        ctx.fillText('★ УЛУЧШЕНИЯ ★', panelX + panelW/2, panelY + 30);
 
         this.shopUpgradeBoxes = [];
         this.shopAdButtons = [];
@@ -1627,7 +1627,7 @@ class Game {
 
             ctx.fillStyle = canAfford ? '#fff' : '#666';
             ctx.font = '9px "Press Start 2P"';
-            ctx.fillText(upg.name + ' Lv.' + upg.level, panelX + 60, y + 16);
+            ctx.fillText(upg.name + ' Ур.' + upg.level, panelX + 60, y + 16);
 
             ctx.fillStyle = '#4caf50';
             ctx.font = '7px "Press Start 2P"';
@@ -1662,8 +1662,8 @@ class Game {
         ctx.fillStyle = canBuySlot ? '#fff' : '#666';
         ctx.font = '9px "Press Start 2P"';
         const slotText = this.unlockedSlots < this.maxSlots
-            ? 'Buy Slot #' + (this.unlockedSlots + 1)
-            : 'MAX SLOTS';
+            ? 'Купить слот #' + (this.unlockedSlots + 1)
+            : 'МАКС. СЛОТОВ';
         ctx.fillText(slotText, panelX + 60, slotY + 25);
 
         if (this.unlockedSlots < this.maxSlots && slotCost > 0) {
@@ -1678,7 +1678,7 @@ class Game {
         ctx.fillStyle = '#9c27b0';
         ctx.font = 'bold 10px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('★ WATCH ADS ★', panelX + panelW/2, adSectionY);
+        ctx.fillText('★ СМОТРЕТЬ РЕКЛАМУ ★', panelX + panelW/2, adSectionY);
 
         // Free slot button (ad)
         const freeSlotY = adSectionY + 15;
@@ -1695,10 +1695,10 @@ class Game {
         ctx.fillStyle = canGetFreeSlot ? '#fff' : '#666';
         ctx.font = '7px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('FREE SLOT', freeSlotBox.x + freeSlotBox.w/2, freeSlotY + 15);
+        ctx.fillText('БЕСПЛАТНЫЙ СЛОТ', freeSlotBox.x + freeSlotBox.w/2, freeSlotY + 15);
         ctx.fillStyle = '#ffd700';
         ctx.font = '6px "Press Start 2P"';
-        ctx.fillText('[WATCH AD]', freeSlotBox.x + freeSlotBox.w/2, freeSlotY + 28);
+        ctx.fillText('[СМОТРЕТЬ]', freeSlotBox.x + freeSlotBox.w/2, freeSlotY + 28);
 
         // Golden slot button (ad)
         const goldenSlotBox = { x: panelX + 25 + (panelW - 40) / 2, y: freeSlotY, w: (panelW - 40) / 2, h: 35, action: 'goldenSlot' };
@@ -1713,26 +1713,26 @@ class Game {
         ctx.fillStyle = '#ffd700';
         ctx.font = '7px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('★ GOLDEN', goldenSlotBox.x + goldenSlotBox.w/2, freeSlotY + 15);
+        ctx.fillText('★ ЗОЛОТОЙ', goldenSlotBox.x + goldenSlotBox.w/2, freeSlotY + 15);
         ctx.fillStyle = '#fff';
         ctx.font = '6px "Press Start 2P"';
-        ctx.fillText('[WATCH AD]', goldenSlotBox.x + goldenSlotBox.w/2, freeSlotY + 28);
+        ctx.fillText('[СМОТРЕТЬ]', goldenSlotBox.x + goldenSlotBox.w/2, freeSlotY + 28);
 
         // Golden slot info
         ctx.fillStyle = '#888';
         ctx.font = '6px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Golden slots keep mobs after Rebirth!', panelX + panelW/2, adSectionY + 62);
+        ctx.fillText('Золотые слоты сохраняют мобов!', panelX + panelW/2, adSectionY + 62);
 
         // Count golden slots
         const goldenCount = this.pedestals.filter(p => p.golden).length;
         ctx.fillStyle = '#ffd700';
-        ctx.fillText('Golden: ' + goldenCount + '/' + this.unlockedSlots, panelX + panelW/2, adSectionY + 75);
+        ctx.fillText('Золотых: ' + goldenCount + '/' + this.unlockedSlots, panelX + panelW/2, adSectionY + 75);
 
         ctx.fillStyle = '#888';
         ctx.font = '8px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Click to buy | [TAB] close', panelX + panelW/2, panelY + panelH - 12);
+        ctx.fillText('Клик - купить | [TAB] закрыть', panelX + panelW/2, panelY + panelH - 12);
     }
 
     drawStatsPanel(ctx, W, H) {
@@ -1750,17 +1750,17 @@ class Game {
         ctx.fillStyle = '#4caf50';
         ctx.font = 'bold 16px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('STATISTICS', panelX + panelW/2, panelY + 30);
+        ctx.fillText('СТАТИСТИКА', panelX + panelW/2, panelY + 30);
 
         const stats = [
-            ['Current Money', '$' + this.formatNum(Math.floor(this.money))],
-            ['Income/sec', '$' + this.formatNum(this.totalIncome)],
-            ['Lifetime Earned', '$' + this.formatNum(Math.floor(this.lifetimeEarnings))],
-            ['Coins Merged', this.totalMerges.toString()],
-            ['Coins Sold', this.totalSold.toString()],
-            ['Slots Unlocked', this.unlockedSlots + '/' + this.maxSlots],
-            ['Rebirth Level', this.rebirthLevel.toString()],
-            ['Rebirth Mult', 'x' + this.rebirthMultiplier.toFixed(1)]
+            ['Деньги', '$' + this.formatNum(Math.floor(this.money))],
+            ['Доход/сек', '$' + this.formatNum(this.totalIncome)],
+            ['Всего заработано', '$' + this.formatNum(Math.floor(this.lifetimeEarnings))],
+            ['Монет слито', this.totalMerges.toString()],
+            ['Монет продано', this.totalSold.toString()],
+            ['Слотов открыто', this.unlockedSlots + '/' + this.maxSlots],
+            ['Ур. реинкарн.', this.rebirthLevel.toString()],
+            ['Множитель', 'x' + this.rebirthMultiplier.toFixed(1)]
         ];
 
         stats.forEach((stat, i) => {
@@ -1777,7 +1777,7 @@ class Game {
         ctx.fillStyle = '#888';
         ctx.font = '9px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('[Q] to close', panelX + panelW/2, panelY + panelH - 12);
+        ctx.fillText('[Q] закрыть', panelX + panelW/2, panelY + panelH - 12);
     }
 
     drawRebirthPanel(ctx, W, H) {
@@ -1795,29 +1795,29 @@ class Game {
         ctx.fillStyle = '#ff00ff';
         ctx.font = 'bold 16px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('★ REBIRTH ★', panelX + panelW/2, panelY + 30);
+        ctx.fillText('★ ПЕРЕРОЖДЕНИЕ ★', panelX + panelW/2, panelY + 30);
 
         const required = this.getRebirthRequirement();
         const canRebirth = this.canRebirth();
 
         ctx.fillStyle = '#fff';
         ctx.font = '9px "Press Start 2P"';
-        ctx.fillText('Reset all progress for permanent bonuses!', panelX + panelW/2, panelY + 60);
+        ctx.fillText('Сбрось прогресс ради постоянных бонусов!', panelX + panelW/2, panelY + 60);
 
         ctx.fillStyle = '#ffd700';
         ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Next Rebirth Bonus:', panelX + panelW/2, panelY + 95);
+        ctx.fillText('Бонус перерождения:', panelX + panelW/2, panelY + 95);
         ctx.fillStyle = '#4caf50';
-        ctx.fillText('+100% income multiplier', panelX + panelW/2, panelY + 115);
-        ctx.fillText('+2 max slot capacity', panelX + panelW/2, panelY + 135);
+        ctx.fillText('+100% множитель дохода', panelX + panelW/2, panelY + 115);
+        ctx.fillText('+2 макс. слота', panelX + panelW/2, panelY + 135);
 
         ctx.fillStyle = '#aaa';
         ctx.font = '8px "Press Start 2P"';
-        ctx.fillText('Requirements:', panelX + panelW/2, panelY + 165);
+        ctx.fillText('Требования:', panelX + panelW/2, panelY + 165);
 
         const requiredSlots = this.getRebirthSlotRequirement();
         ctx.fillStyle = this.unlockedSlots >= requiredSlots ? '#4caf50' : '#f44336';
-        ctx.fillText('• ' + requiredSlots + ' slots unlocked: ' + this.unlockedSlots + '/' + requiredSlots, panelX + panelW/2, panelY + 185);
+        ctx.fillText('• ' + requiredSlots + ' слотов открыто: ' + this.unlockedSlots + '/' + requiredSlots, panelX + panelW/2, panelY + 185);
 
         ctx.fillStyle = this.lifetimeEarnings >= required ? '#4caf50' : '#f44336';
         ctx.fillText('• $' + this.formatNum(required) + ' lifetime: $' + this.formatNum(Math.floor(this.lifetimeEarnings)), panelX + panelW/2, panelY + 195);
@@ -1838,11 +1838,11 @@ class Game {
 
         ctx.fillStyle = canRebirth ? '#fff' : '#666';
         ctx.font = 'bold 9px "Press Start 2P"';
-        ctx.fillText('REBIRTH', btnX + btnW/2, btnY + 22);
+        ctx.fillText('ПЕРЕРОДИТЬСЯ', btnX + btnW/2, btnY + 22);
 
         ctx.fillStyle = '#888';
         ctx.font = '8px "Press Start 2P"';
-        ctx.fillText('[R] to close', panelX + panelW/2, panelY + panelH - 10);
+        ctx.fillText('[R] закрыть', panelX + panelW/2, panelY + panelH - 10);
     }
 
     drawFloor(ctx) {
@@ -1965,7 +1965,7 @@ class Game {
         ctx.textAlign = 'center';
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 10;
-        ctx.fillText('★ YOUR BASE ★', x + w/2, y - 12);
+        ctx.fillText('★ ТВОЯ БАЗА ★', x + w/2, y - 12);
         ctx.shadowBlur = 0;
     }
 
@@ -2001,7 +2001,7 @@ class Game {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 10px "Press Start 2P"';
         ctx.textBaseline = 'top';
-        ctx.fillText('SELL', sz.x + sz.width/2, sz.y + sz.height - 25);
+        ctx.fillText('ПРОДАТЬ', sz.x + sz.width/2, sz.y + sz.height - 25);
 
         if (near && this.player.heldItem) {
             ctx.fillStyle = '#f6e05e';
@@ -2434,7 +2434,7 @@ class Game {
             this.calcIncome();
 
             document.getElementById('reset-btn').classList.remove('hidden');
-            document.getElementById('play-btn').textContent = 'CONTINUE';
+            document.getElementById('play-btn').textContent = 'ПРОДОЛЖИТЬ';
 
             console.log('Game loaded successfully!');
         } catch(e) {
@@ -2443,7 +2443,7 @@ class Game {
     }
 
     resetGame() {
-        if (confirm('Are you sure you want to reset ALL progress? This cannot be undone!')) {
+        if (confirm('Сбросить ВЕСЬ прогресс? Это нельзя отменить!')) {
             localStorage.removeItem('stealACoin_save_v2');
             localStorage.removeItem('stealACoin_save_v3');
             // Clear cloud save
@@ -2457,7 +2457,7 @@ class Game {
     // Show rewarded ad for bonus money
     showRewardedAd() {
         if (!ysdk) {
-            this.addFloatingText(550, 350, 'Ads not available', '#ff0000');
+            this.addFloatingText(550, 350, 'Реклама недоступна', '#ff0000');
             return;
         }
 
@@ -2480,7 +2480,7 @@ class Game {
 
                     this.money += bonus;
                     this.lifetimeEarnings += bonus;
-                    this.addFloatingText(550, 300, '+$' + this.formatNum(bonus) + ' BONUS!', '#ffd700');
+                    this.addFloatingText(550, 300, '+$' + this.formatNum(bonus) + ' БОНУС!', '#ffd700');
                     this.playSound(800, 500);
                     this.updateHUD();
                     this.saveGame();
@@ -2491,7 +2491,7 @@ class Game {
                 },
                 onError: (e) => {
                     console.log('Rewarded ad error:', e);
-                    this.addFloatingText(550, 350, 'Ad not available', '#ff0000');
+                    this.addFloatingText(550, 350, 'Реклама недоступна', '#ff0000');
                 }
             }
         });

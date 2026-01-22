@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Steal A Coin">
-    <meta property="og:description" content="Idle tycoon game. Merge coins and become the ultimate mogul!">
+    <meta property="og:title" content="Укради Монетку">
+    <meta property="og:description" content="Idle-тайкун. Собирай монеты, объединяй и становись магнатом!">
     <meta property="og:image" content="icon.svg">
     <meta property="og:type" content="website">
 
-    <title>Steal A Coin</title>
+    <title>Укради Монетку</title>
     <link rel="stylesheet" href="styles.css">
     <!-- Yandex Games SDK -->
     <script src="/sdk.js"></script>
@@ -18,16 +18,16 @@
 <body>
     <div id="game-container">
         <div id="menu-screen">
-            <h1 class="title">STEAL A COIN</h1>
-            <p class="subtitle">Idle Tycoon</p>
-            <button id="play-btn" class="btn">PLAY</button>
-            <button id="reset-btn" class="btn btn-small hidden">RESET SAVE</button>
+            <h1 class="title">УКРАДИ МОНЕТКУ</h1>
+            <p class="subtitle">Idle Тайкун</p>
+            <button id="play-btn" class="btn">ИГРАТЬ</button>
+            <button id="reset-btn" class="btn btn-small hidden">СБРОС</button>
             <div class="menu-hint">
-                <p>WASD - Move | E - Interact</p>
-                <p>TAB - Shop | Q - Stats | M - Sound</p>
-                <p>Merge same coins = Level Up!</p>
-                <p>R - Rebirth | C - Collection | G - Bonus</p>
-                <p>1/2/3 - Switch floors</p>
+                <p>WASD - Движение | E - Взять/Положить</p>
+                <p>TAB - Магазин | Q - Статистика | M - Звук</p>
+                <p>Объединяй одинаковые монеты!</p>
+                <p>R - Перерождение | C - Коллекция | G - Бонус</p>
+                <p>1/2/3 - Смена этажа</p>
             </div>
         </div>
 
@@ -40,12 +40,12 @@
                 <div id="income-display">
                     <span>+</span>
                     <span id="income">0</span>
-                    <span>/sec</span>
+                    <span>/сек</span>
                 </div>
             </div>
             <canvas id="game-canvas"></canvas>
             <div id="controls-hint">
-                WASD - move | E - interact | TAB - shop | Q - stats | Merge same coins!
+                WASD - движение | E - взять | TAB - магазин | Q - стата | Объединяй монеты!
             </div>
         </div>
     </div>
